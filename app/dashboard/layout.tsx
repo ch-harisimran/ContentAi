@@ -1,10 +1,11 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import Navbar from "@/components/Navbar";
+import AuthedShell from "@/components/AuthedShell";
 
-// Shared authenticated shell. /history, /templates, /analytics, and
-// /settings each render their own copy of this shell (see lib/auth.ts)
-// since Next.js layouts only apply within their own route subtree.
+// /history, /templates, /analytics, and /settings each do this same
+// requireUser() + AuthedShell wrap themselves (see lib/auth.ts) since
+// Next.js layouts only apply within their own route subtree, and those
+// pages aren't nested under /dashboard.
 export default async function AuthedLayout({ children }: { children: React.ReactNode }) {
   const supabase = createClient();
   const {
@@ -15,10 +16,5 @@ export default async function AuthedLayout({ children }: { children: React.React
     redirect("/login");
   }
 
-  return (
-    <div className="min-h-screen bg-canvas">
-      <Navbar email={user.email} />
-      <div className="mx-auto max-w-6xl px-6 py-10">{children}</div>
-    </div>
-  );
+  return <AuthedShell email={user.email}>{children}</AuthedShell>;
 }

@@ -1,5 +1,4 @@
 import { createServerClient } from "@supabase/ssr";
-import { createClient as createSupabaseJsClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 import type { Database } from "@/types/database";
 
@@ -33,16 +32,5 @@ export function createClient() {
         },
       },
     }
-  );
-}
-
-// Admin client using the service role key. Bypasses RLS — only use it
-// server-side for trusted operations (e.g. quota checks across a user's
-// own rows where we've already verified the session).
-export function createAdminClient() {
-  return createSupabaseJsClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { persistSession: false } }
   );
 }
