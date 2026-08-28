@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { CONTENT_TYPES } from "@/lib/constants";
+import type { GenerationRow } from "@/types/database";
 
 const DAYS = 30;
 
@@ -31,7 +32,11 @@ export async function GET() {
     return NextResponse.json({ error: "Failed to load analytics." }, { status: 500 });
   }
 
-  const rows = data ?? [];
+  // Cast explicitly: Supabase's generated row type for a narrow column-list
+  // select occasionally collapses to `never` under this TS/postgrest-js
+  // combo even though the columns are valid — the shape below is exactly
+  // what the select("content_type, created_at") query returns.
+  const rows = (data ?? []) as Pick<GenerationRow, "content_type" | "created_at">[];
 
   // Build a zero-filled day series so the chart doesn't have gaps.
   const dayBuckets: Record<string, number> = {};

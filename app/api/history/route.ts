@@ -35,13 +35,19 @@ export async function GET(request: Request) {
     batchQuery = batchQuery.eq("content_type", contentType);
   }
 
-  const { data: batchRows, error: batchError, count } = await batchQuery;
+  const { data: batchRowsRaw, error: batchError, count } = await batchQuery;
 
   if (batchError) {
     return NextResponse.json({ error: "Failed to load history." }, { status: 500 });
   }
 
-  const batchIds = (batchRows ?? []).map((r) => r.batch_id);
+  // Cast explicitly: Supabase's generated row type has, in practice,
+  // collapsed to `never` for this exact query shape (a `let`-reassigned
+  // builder chain) under this TS/postgrest-js combo — see the identical
+  // fix in app/api/analytics/route.ts. The shape below is exactly what
+  // select("*") on `generations` returns.
+  const batchRows = (batchRowsRaw ?? []) as GenerationRow[];
+  const batchIds = batchRows.map((r) => r.batch_id);
 
   // Step 2: fetch every variation for those batches.
   let variations: GenerationRow[] = [];
@@ -56,10 +62,10 @@ export async function GET(request: Request) {
     if (variationError) {
       return NextResponse.json({ error: "Failed to load history." }, { status: 500 });
     }
-    variations = variationRows ?? [];
+    variations = (variationRows ?? []) as GenerationRow[];
   }
 
-  const batches: GenerationBatch[] = (batchRows ?? []).map((b) => ({
+  const batches: GenerationBatch[] = batchRows.map((b) => ({
     batch_id: b.batch_id,
     content_type: b.content_type,
     tone: b.tone,
