@@ -13,6 +13,7 @@ import {
 } from "@/lib/constants";
 import { isRateLimited } from "@/lib/rateLimit";
 import type { ContentType, Tone } from "@/types/database";
+import type { ChatCompletion, ChatCompletionMessageParam } from "openai/resources/chat/completions";
 
 const VALID_CONTENT_TYPES: ContentType[] = CONTENT_TYPES.map((c) => c.value);
 const VALID_TONES: Tone[] = TONES.map((t) => t.value);
@@ -121,10 +122,21 @@ export async function POST(request: Request) {
   let variations: string[];
   try {
     const openrouter = getOpenRouterClient();
-    const messages = isImageCaption
+    // Annotated explicitly: buildMessages/buildVisionMessages return
+    // differently-shaped literal arrays (plain string content vs.
+    // image-part content), and a bare ternary infers `messages` as a
+    // union of two array types rather than an array of the union element
+    // — which the SDK's overload resolution doesn't accept, silently
+    // falling back to its streaming-capable overload instead.
+    const messages: ChatCompletionMessageParam[] = isImageCaption
       ? buildVisionMessages(tone as Tone, (topic ?? "").trim(), image as string)
       : buildMessages(content_type as ContentType, tone as Tone, (topic as string).trim());
 
+    // `stream: false` is pinned explicitly so the SDK resolves to its
+    // non-streaming overload (returning `ChatCompletion`) rather than the
+    // generic `ChatCompletion | Stream<ChatCompletionChunk>` union it falls
+    // back to when `stream` is left out of a params object built from a
+    // variable — that union is what the type predicate below narrows.
     const results = await Promise.allSettled(
       Array.from({ length: VARIATIONS_PER_GENERATION }, () =>
         openrouter.chat.completions.create({
@@ -132,12 +144,13 @@ export async function POST(request: Request) {
           messages,
           temperature: 0.9,
           max_tokens: 700,
+          stream: false,
         })
       )
     );
 
     variations = results
-      .filter((r): r is PromiseFulfilledResult<Awaited<ReturnType<typeof openrouter.chat.completions.create>>> => r.status === "fulfilled")
+      .filter((r): r is PromiseFulfilledResult<ChatCompletion> => r.status === "fulfilled")
       .map((r) => cleanOutput(r.value.choices[0]?.message?.content ?? ""))
       .filter(Boolean);
 
