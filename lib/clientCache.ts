@@ -74,8 +74,14 @@ export async function fetchCached<T>(key: string, url: string): Promise<T> {
   return promise;
 }
 
+// Returns an unsubscribe function. It's returned directly as a useEffect
+// cleanup function at the one call site, so its body is a block (not an
+// implicit-return arrow) — Set.delete() returns boolean, and useEffect
+// cleanup functions are required to return void.
 export function subscribeCached(key: string, fn: Listener) {
   if (!listeners.has(key)) listeners.set(key, new Set());
   listeners.get(key)!.add(fn);
-  return () => listeners.get(key)?.delete(fn);
+  return () => {
+    listeners.get(key)?.delete(fn);
+  };
 }
