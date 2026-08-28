@@ -216,12 +216,12 @@ export default function LandingPage() {
           <div>
             <div className="mb-6 flex items-center gap-2 font-mono text-xs tracking-widest text-ink-dim">
               <span className="h-[15px] w-2 animate-blink bg-accent" />
-              AI CONTENT STUDIO — NO TEMPLATES, NO NOISE
+              AI CONTENT STUDIO — NO FLUFF, NO NOISE
             </div>
             <h1 className="max-w-2xl font-serif text-[42px] font-medium leading-[0.98] tracking-tight sm:text-[64px] lg:text-[80px]">
               Say it once.
               <br />
-              Ship it <em className="italic text-accent">seven</em> ways.
+              Ship it <em className="italic text-accent">eight</em> ways.
             </h1>
             <p className="mt-7 max-w-md text-base leading-relaxed text-ink-dim">
               One topic, five tones, three takes to choose from — text or a photo in, ready-to-post copy out. Built
@@ -392,7 +392,7 @@ export default function LandingPage() {
       {/* Footer */}
       <footer className="flex justify-between border-t border-hairline px-6 py-6 font-mono text-[11.5px] text-ink-faint">
         <span>CONTENT·AI © {new Date().getFullYear()}</span>
-        <span className="hidden sm:inline">SAY IT ONCE. SHIP IT SEVEN WAYS.</span>
+        <span className="hidden sm:inline">SAY IT ONCE. SHIP IT EIGHT WAYS.</span>
       </footer>
 
       <style>{`

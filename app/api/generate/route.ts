@@ -1,7 +1,7 @@
 import { randomUUID } from "crypto";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { getOpenAIClient } from "@/lib/openai";
+import { getOpenRouterClient, GENERATION_MODEL } from "@/lib/openrouter";
 import { buildMessages, buildVisionMessages, cleanOutput } from "@/lib/prompts";
 import {
   MONTHLY_GENERATION_LIMIT,
@@ -16,6 +16,11 @@ import type { ContentType, Tone } from "@/types/database";
 
 const VALID_CONTENT_TYPES: ContentType[] = CONTENT_TYPES.map((c) => c.value);
 const VALID_TONES: Tone[] = TONES.map((t) => t.value);
+
+// This route fires 3 LLM calls in parallel (see below) and free-tier model
+// latency can be slow — Vercel's default function timeout (10s) can be too
+// tight for that. Extend it; 60s is the max allowed on the Hobby plan.
+export const maxDuration = 60;
 
 // Data URL length cap, sized so the underlying image stays roughly under
 // MAX_IMAGE_UPLOAD_MB once base64's ~4/3 size inflation is accounted for.
@@ -108,26 +113,40 @@ export async function POST(request: Request) {
     );
   }
 
-  // --- Generate N variations in a single OpenAI request ---
+  // --- Generate N variations ---
+  // Free models routed through OpenRouter don't reliably support an
+  // OpenAI-style `n` parameter, so one full generation =
+  // VARIATIONS_PER_GENERATION parallel calls instead of one call asking
+  // for several candidates.
   let variations: string[];
   try {
-    const openai = getOpenAIClient();
+    const openrouter = getOpenRouterClient();
     const messages = isImageCaption
       ? buildVisionMessages(tone as Tone, (topic ?? "").trim(), image as string)
       : buildMessages(content_type as ContentType, tone as Tone, (topic as string).trim());
 
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages,
-      temperature: 0.9,
-      max_tokens: 700,
-      n: VARIATIONS_PER_GENERATION,
-    });
-    variations = completion.choices
-      .map((choice) => cleanOutput(choice.message?.content ?? ""))
+    const results = await Promise.allSettled(
+      Array.from({ length: VARIATIONS_PER_GENERATION }, () =>
+        openrouter.chat.completions.create({
+          model: GENERATION_MODEL,
+          messages,
+          temperature: 0.9,
+          max_tokens: 700,
+        })
+      )
+    );
+
+    variations = results
+      .filter((r): r is PromiseFulfilledResult<Awaited<ReturnType<typeof openrouter.chat.completions.create>>> => r.status === "fulfilled")
+      .map((r) => cleanOutput(r.value.choices[0]?.message?.content ?? ""))
       .filter(Boolean);
+
+    const failures = results.filter((r) => r.status === "rejected");
+    if (failures.length > 0) {
+      console.error(`${failures.length}/${VARIATIONS_PER_GENERATION} OpenRouter calls failed:`, failures[0].reason);
+    }
   } catch (err) {
-    console.error("OpenAI generation failed:", err);
+    console.error("OpenRouter generation failed:", err);
     return NextResponse.json({ error: "Generation failed. Please try again." }, { status: 502 });
   }
 

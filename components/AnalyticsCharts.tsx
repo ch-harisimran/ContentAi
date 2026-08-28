@@ -76,8 +76,8 @@ export default function AnalyticsCharts() {
           <AreaChart data={data.byDay}>
             <defs>
               <linearGradient id="fillCount" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#ff5a36" stopOpacity={0.45} />
-                <stop offset="95%" stopColor="#ff5a36" stopOpacity={0} />
+                <stop offset="5%" stopColor="#7D4047" stopOpacity={0.45} />
+                <stop offset="95%" stopColor="#7D4047" stopOpacity={0} />
               </linearGradient>
             </defs>
             <XAxis
@@ -90,7 +90,7 @@ export default function AnalyticsCharts() {
             />
             <YAxis allowDecimals={false} tick={{ fill: "#57544c", fontSize: 11 }} axisLine={false} tickLine={false} />
             <Tooltip contentStyle={TOOLTIP_STYLE} labelStyle={{ color: "#f1ede3" }} />
-            <Area type="monotone" dataKey="count" stroke="#ff5a36" fill="url(#fillCount)" strokeWidth={1.5} />
+            <Area type="monotone" dataKey="count" stroke="#7D4047" fill="url(#fillCount)" strokeWidth={1.5} />
           </AreaChart>
         </ResponsiveContainer>
       </div>
@@ -110,7 +110,7 @@ export default function AnalyticsCharts() {
               width={150}
             />
             <Tooltip contentStyle={TOOLTIP_STYLE} cursor={{ fill: "rgba(241,237,227,0.04)" }} />
-            <Bar dataKey="count" fill="#ff5a36" radius={0} />
+            <Bar dataKey="count" fill="#7D4047" radius={0} />
           </BarChart>
         </ResponsiveContainer>
       </div>

@@ -20,8 +20,8 @@ const config: Config = {
           faint: "#57544c",
         },
         accent: {
-          DEFAULT: "#ff5a36",
-          dim: "rgba(255,90,54,0.15)",
+          DEFAULT: "#7D4047",
+          dim: "rgba(125,64,71,0.15)",
         },
       },
       fontFamily: {

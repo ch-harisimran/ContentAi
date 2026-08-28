@@ -16,7 +16,7 @@ const plexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "ContentAI — Say it once. Ship it seven ways.",
+  title: "ContentAI — Say it once. Ship it eight ways.",
   description:
     "One topic, five tones, three takes to choose from. AI content generation for people who write daily, not a demo reel.",
 };

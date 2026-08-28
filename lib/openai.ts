@@ -1,15 +1,6 @@
-import OpenAI from "openai";
-
-let client: OpenAI | null = null;
-
-// Lazily instantiated so the app can still build/run without the key set
-// (e.g. during local scaffolding before secrets are configured).
-export function getOpenAIClient() {
-  if (!client) {
-    if (!process.env.OPENAI_API_KEY) {
-      throw new Error("OPENAI_API_KEY is not set. Add it to .env.local.");
-    }
-    client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-  }
-  return client;
-}
+// UNUSED — this specific file (a client that called OpenAI directly) isn't
+// imported anywhere anymore. The app now calls OpenRouter instead (see
+// lib/openrouter.ts) using the free tier, no billing required — but it
+// still uses the `openai` npm package to do so, since OpenRouter's API is
+// OpenAI-compatible. So: this file is safe to delete, but the `openai`
+// package in package.json is NOT unused — leave that dependency alone.

@@ -27,9 +27,12 @@ const SYSTEM_PROMPTS: Record<ContentType, string> = {
     "You are a social media copywriter with strong visual analysis skills. Look carefully at the image: the main subject, the setting/background, colors, lighting, mood, and any notable details. Generate a single ready-to-post caption that reflects what's actually in the photo (with 3-5 relevant hashtags at the end). Keep it under 300 characters excluding hashtags. Do not describe the image literally like an alt-text — write a caption a person would post.",
 };
 
+const OUTPUT_INSTRUCTIONS =
+  "Generate the content now. Output only the final content — no preamble, no markdown code fences, no explanations.";
+
 export function buildMessages(contentType: ContentType, tone: Tone, topic: string) {
   const system = `${SYSTEM_PROMPTS[contentType]} Tone: ${TONE_GUIDANCE[tone]}`;
-  const user = `Topic: ${topic}\nTone: ${tone}\n\nGenerate the content now. Output only the final content — no preamble, no markdown code fences, no explanations.`;
+  const user = `Topic: ${topic}\nTone: ${tone}\n\n${OUTPUT_INSTRUCTIONS}`;
 
   return [
     { role: "system" as const, content: system },
@@ -37,14 +40,15 @@ export function buildMessages(contentType: ContentType, tone: Tone, topic: strin
   ];
 }
 
-// Vision variant: same system framing as image_caption above, but the user
-// message carries the image (as a base64 data URL) plus optional text
-// context, per OpenAI's multimodal message format.
+// Vision variant: same system framing as image_caption above, but the
+// user message carries the image (as a base64 data URL) plus optional
+// text context, using the OpenAI-compatible multimodal content format
+// that OpenRouter also accepts for vision-capable models.
 export function buildVisionMessages(tone: Tone, description: string, imageDataUrl: string) {
   const system = `${SYSTEM_PROMPTS.image_caption} Tone: ${TONE_GUIDANCE[tone]}`;
   const textPart = description
-    ? `Additional context from the user: ${description}\n\nGenerate the caption now — output only the final caption, no preamble, no markdown, no explanations.`
-    : "Generate the caption now — output only the final caption, no preamble, no markdown, no explanations.";
+    ? `Additional context from the user: ${description}\n\n${OUTPUT_INSTRUCTIONS}`
+    : OUTPUT_INSTRUCTIONS;
 
   return [
     { role: "system" as const, content: system },
